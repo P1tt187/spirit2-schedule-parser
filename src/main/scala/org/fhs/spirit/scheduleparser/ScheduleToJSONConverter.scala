@@ -297,19 +297,8 @@ object ScheduleToJSONConverter {
 
     val docents = multiLecturers.getOrElse(contentParts(2), List(contentParts(2)))
 
-    val lectureAlternatives = alternatives.filter( a => EWeekdays.valueOf(indexColumn(trIdx)) ==
-      EWeekdays.valueOf(a.day.toString) && lectureName.replace(160.toChar,' ').replaceAll("\\s+","").trim
-      .toUpperCase().contains( a.lecture.replaceAll("\\s+",""))
-    ).map {
-      alt=>
-        JSONObject(Map[String,Any](
-          "weekday" -> alt.day.name(),
-          "duration" -> alt.duration.name(),
-          "hour" -> alt.hour,
-          "room" -> alt.room,
-          "lecture" -> alt.lecture
-        ))
-    }
+    val lectureAlternatives: List[JSONObject] = extractAlternatives(indexColumn, trIdx, alternatives, room, lectureName)
+
     val uuid: String = mkChecksum(indexColumn, timeData, trIdx, lectureKind, lectureName, room, duration, docents)
 
     val lectureData = JSONObject(Map[String, Any](
@@ -333,6 +322,27 @@ object ScheduleToJSONConverter {
       "alternatives" -> JSONArray(lectureAlternatives)
     ))
     lectureData
+  }
+
+  def extractAlternatives(indexColumn: Map[Int, String], trIdx: Int, alternatives: List[Alternative], room: String, lectureName:String): List[JSONObject] = {
+    val lectureAlternatives = if (room.contains("*")) {
+      alternatives.filter(a => EWeekdays.valueOf(indexColumn(trIdx)) ==
+        EWeekdays.valueOf(a.day.toString) && lectureName.replace(160.toChar, ' ').replaceAll("\\s+", "").trim
+        .toUpperCase().contains(a.lecture.replaceAll("\\s+", ""))
+      ).map {
+        alt =>
+          JSONObject(Map[String, Any](
+            "weekday" -> alt.day.name(),
+            "duration" -> alt.duration.name(),
+            "hour" -> alt.hour,
+            "room" -> alt.room,
+            "lecture" -> alt.lecture
+          ))
+      }
+    } else {
+      List[JSONObject]()
+    }
+    lectureAlternatives
   }
 
   def mkChecksum(indexColumn: Map[Int, String], timeData: Time, trIdx: Int, lectureKind: ELectureKind, lectureName: String, room: String, duration: EDuration, docents: List[String]): String = {
