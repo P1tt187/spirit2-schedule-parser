@@ -275,9 +275,9 @@ object ScheduleToJSONConverter {
 
     val content = td.text().replaceAll("br2n", "\n")
     val contentParts = content.split("\n")
-    val lectureName = contentParts(0)
+    val lectureName = removeObsoleteChars(contentParts(0))
     val roomParts = contentParts(1).trim().replace(160.toChar, ' ').replaceAll("\\s+", " ").split(" ")
-    val room = roomParts(0)
+    val room = removeObsoleteChars(roomParts(0))
 
     val duration = if (roomParts.length > 1) {
       roomParts(1) match {
@@ -295,7 +295,7 @@ object ScheduleToJSONConverter {
       ""
     }
 
-    val docents = multiLecturers.getOrElse(contentParts(2), List(contentParts(2)))
+    val docents = multiLecturers.getOrElse(contentParts(2), List(contentParts(2))).map( removeObsoleteChars )
 
     val lectureAlternatives: List[JSONObject] = extractAlternatives(indexColumn, trIdx, alternatives, room, lectureName)
 
@@ -413,6 +413,10 @@ object ScheduleToJSONConverter {
       idx =>
         nodes.get(idx)
     }.toList
+  }
+
+  private def removeObsoleteChars(str:String) = {
+    str.replaceAll("_"," ").trim
   }
 
 }
