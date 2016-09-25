@@ -362,8 +362,8 @@ object ScheduleToJSONConverter {
   private def parseTime(timeString: String): Time = {
 
     val timeParts = timeString.split("[-]")
-    val startParts = timeParts(0).split("[.]")
-    val endParts = timeParts(1).split("[.]")
+    val startParts = timeParts(0).split("[.:]")
+    val endParts = timeParts(1).split("[.:]")
 
 
     val startHour = startParts(0).trim.toInt
