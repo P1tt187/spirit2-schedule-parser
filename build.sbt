@@ -1,6 +1,6 @@
 name := "spirit2-schedule-parser"
 
-version := "1.0"
+version := "1.0."+ sys.env.get("BUILD_NUMBER").getOrElse("00")
 
 scalaVersion := "2.11.8"
 
