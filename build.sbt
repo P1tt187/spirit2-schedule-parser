@@ -16,7 +16,8 @@ resolvers += Resolver.sonatypeRepo("public")
 libraryDependencies ++= Seq(
   "org.specs2" %% "specs2-core" % "3.6.4" % "test",
   "org.scala-lang.modules" %% "scala-parser-combinators" % "1.0.4",
-  "org.jsoup" % "jsoup" % "1.8.3" % "compile->default" withSources
+  "org.jsoup" % "jsoup" % "1.8.3" % "compile->default" withSources,
+  "joda-time" % "joda-time" % "2.9.4" withSources()
 )
 
 

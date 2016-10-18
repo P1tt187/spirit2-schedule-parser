@@ -2,7 +2,7 @@ package org.fhs.spirit.scheduleparser
 
 
 import java.security.MessageDigest
-import java.util.Calendar
+import java.util.{Calendar, Locale}
 import java.util.regex.Pattern
 
 import org.fhs.spirit.model.{Alternative, Time}
@@ -10,6 +10,8 @@ import org.fhs.spirit.scheduleparser.enumerations.EDuration._
 import org.fhs.spirit.scheduleparser.enumerations.ELectureKind._
 import org.fhs.spirit.scheduleparser.enumerations.EScheduleKind._
 import org.fhs.spirit.scheduleparser.enumerations._
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.jsoup.Jsoup
 import org.jsoup.nodes.{Document, Element}
 import org.jsoup.select.Elements
@@ -25,6 +27,8 @@ import scala.util.parsing.json.{JSONArray, JSONObject}
 object ScheduleToJSONConverter {
 
   private val TIME = "Zeit"
+
+  private val DATEFORMAT = DateTimeFormat.forPattern("dd.MM.yyyy").withLocale(Locale.GERMAN)
 
   def apply(schedule: String, scheduleKind: EScheduleKind = REGULAR, course: String = "", multiLecturers: Map[String, List[String]] = Map()): Option[String] = {
 
@@ -72,6 +76,7 @@ object ScheduleToJSONConverter {
     } else {
       courseSelector.text()
     }
+    val scheduleDate: DateTime = parseScheduleDate(document)
 
     val extractetTitleSelector = document.select("h2").get(0)
     val extractedTitle = if (extractetTitleSelector != null) {
@@ -127,7 +132,7 @@ object ScheduleToJSONConverter {
           }
         }
     }.filter(_.nonEmpty).map(_.get)
-    "{\"title\":\"" + extractedTitle + "\"," + "\"scheduleData\":[" + scheduleData.mkString(",") + "]}"
+    "{\"title\":\"" + extractedTitle + "\"," + "\"scheduleData\":[" + scheduleData.mkString(",") + "]," + " \"scheduleDate\":" + scheduleDate.getMillis + "}"
   }
 
   private def parseBlockHeadline(schedule: String): Map[String, Int] = {
@@ -215,7 +220,7 @@ object ScheduleToJSONConverter {
     }
     result
   }
-
+  @throws(classOf[Exception])
   private def parseRegular(schedule: String, multiLecturers: Map[String, List[String]], course: String, scheduleKind: EScheduleKind = REGULAR, title: String = ""): String = {
     /** Stores the meaning of each column by Index */
     val columnIndex = parseRegularHeadline(schedule)
@@ -223,6 +228,8 @@ object ScheduleToJSONConverter {
 
     val document = Jsoup.parse(schedule.replaceAll("(?i)<br[^>]*>", "br2n"))
     val alternatives = parseAlternatives(document)
+    val scheduleDate: DateTime = parseScheduleDate(document)
+
 
     val tbody = document.select("tbody").first()
 
@@ -263,9 +270,19 @@ object ScheduleToJSONConverter {
         }
     }.filter(_.nonEmpty).map(_.get)
 
-    "{\"title\":\"" + title + "\"," + "\"scheduleData\":[" + scheduleData.mkString(",") + "]}"
+    "{\"title\":\"" + title + "\"," + " \"scheduleData\":[" + scheduleData.mkString(",") + "]," + " \"scheduleDate\":" + scheduleDate.getMillis + "}"
+  }
+  @throws(classOf[Exception])
+  def parseScheduleDate(document: Document): DateTime = {
+    val dateString = document.select("center").find(p => p.text().startsWith("Stand vom:")) match {
+      case None => "01.01.2016"
+      case Some(element) => element.select("b").first().text()
+    }
+    val scheduleDate = DATEFORMAT.parseDateTime(dateString)
+    scheduleDate
   }
 
+  @throws(classOf[Exception])
   private def extractLectureInformationFromTd(multiLecturers: Map[String, List[String]], indexColumn: Map[Int, String], timeData: Time, trIdx: Int, td: Element, course: String, scheduleKind: EScheduleKind, alternatives:List[Alternative]): JSONObject = {
     val lectureKind = if (td.select("img").first().attr("src").contains("buch")) {
       LECTURE
@@ -324,6 +341,7 @@ object ScheduleToJSONConverter {
     lectureData
   }
 
+  @throws(classOf[Exception])
   def extractAlternatives(indexColumn: Map[Int, String], trIdx: Int, alternatives: List[Alternative], room: String, lectureName:String): List[JSONObject] = {
     val lectureAlternatives = if (room.contains("*")) {
       alternatives.filter(a => EWeekdays.valueOf(indexColumn(trIdx)) ==
@@ -345,6 +363,7 @@ object ScheduleToJSONConverter {
     lectureAlternatives
   }
 
+  @throws(classOf[Exception])
   def mkChecksum(indexColumn: Map[Int, String], timeData: Time, trIdx: Int, lectureKind: ELectureKind, lectureName: String, room: String, duration: EDuration, docents: List[String]): String = {
     val sha512 = MessageDigest.getInstance("SHA-512")
     (List(timeData.startHour.toString.getBytes, timeData.startMinute.toString.getBytes, timeData.stopHour.toString.getBytes(), timeData.stopMinute.toString.getBytes(),
