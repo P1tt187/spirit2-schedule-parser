@@ -367,7 +367,7 @@ object ScheduleToJSONConverter {
   def mkChecksum(indexColumn: Map[Int, String], timeData: Time, trIdx: Int, lectureKind: ELectureKind, lectureName: String, room: String, duration: EDuration, docents: List[String]): String = {
     val sha512 = MessageDigest.getInstance("SHA-512")
     (List(timeData.startHour.toString.getBytes, timeData.startMinute.toString.getBytes, timeData.stopHour.toString.getBytes(), timeData.stopMinute.toString.getBytes(),
-      indexColumn(trIdx).toString.getBytes(), duration.toString.getBytes, room.getBytes(), lectureKind.toString.getBytes(), lectureName.getBytes()
+      indexColumn.getOrElse(trIdx, "").getBytes(), duration.toString.getBytes, room.getBytes(), lectureKind.toString.getBytes(), lectureName.getBytes()
     ) ++ docents.map(_.getBytes)).foreach(sha512.update)
     val sb = new StringBuilder
     sha512.digest().foreach { b =>
@@ -413,7 +413,7 @@ object ScheduleToJSONConverter {
                 columnIndex += TIME -> trIdx
               }
               else {
-                val weekdayResult = EWeekdays.findConstantByName(trChild.text())
+                val weekdayResult = EWeekdays.findConstantByName(trChild.text().trim)
                 if (!weekdayResult.isPresent) {
                   columnIndex += trChild.text() -> trIdx
                 } else {
