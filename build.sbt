@@ -4,6 +4,8 @@ version := "1.0."+ sys.env.get("BUILD_NUMBER").getOrElse("00")
 
 scalaVersion := "2.11.8"
 
+enablePlugins(LinuxPlugin)
+
 
 resolvers ++= Seq("snapshots" at "http://oss.sonatype.org/content/repositories/snapshots",
   "releases" at "http://oss.sonatype.org/content/repositories/releases"
