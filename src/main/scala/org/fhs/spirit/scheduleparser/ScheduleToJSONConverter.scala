@@ -132,7 +132,7 @@ object ScheduleToJSONConverter {
           }
         }
     }.filter(_.nonEmpty).map(_.get)
-    "{\"title\":\"" + extractedTitle + "\"," + "\"scheduleData\":[" + scheduleData.mkString(",") + "]," + " \"scheduleDate\":" + scheduleDate.getMillis + "}"
+    "{\"title\":\"" + extractedTitle + "\"," + "\"scheduleData\":[" + scheduleData.mkString(",") + "]," + " \"scheduleDate\":" + scheduleDate.getMillis + ", \"uid\":\"" + mkChecksum(extractedTitle + scheduleDate.getMillis + scheduleData.toString) + "\"}"
   }
 
   private def parseBlockHeadline(schedule: String): Map[String, Int] = {
@@ -270,7 +270,7 @@ object ScheduleToJSONConverter {
         }
     }.filter(_.nonEmpty).map(_.get)
 
-    "{\"title\":\"" + title + "\"," + " \"scheduleData\":[" + scheduleData.mkString(",") + "]," + " \"scheduleDate\":" + scheduleDate.getMillis + "}"
+    "{\"title\":\"" + title + "\"," + " \"scheduleData\":[" + scheduleData.mkString(",") + "]," + " \"scheduleDate\":" + scheduleDate.getMillis + ", \"uid\":\"" + mkChecksum(title + scheduleDate.getMillis + scheduleData.toString) + "\"}"
   }
   @throws(classOf[Exception])
   def parseScheduleDate(document: Document): DateTime = {
@@ -369,6 +369,18 @@ object ScheduleToJSONConverter {
     (List(timeData.startHour.toString.getBytes, timeData.startMinute.toString.getBytes, timeData.stopHour.toString.getBytes(), timeData.stopMinute.toString.getBytes(),
       indexColumn.getOrElse(trIdx, "").getBytes(), duration.toString.getBytes, room.getBytes(), lectureKind.toString.getBytes(), lectureName.getBytes()
     ) ++ docents.map(_.getBytes)).foreach(sha512.update)
+    val sb = new StringBuilder
+    sha512.digest().foreach { b =>
+      sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1))
+    }
+    sha512.reset()
+    val uuid = sb.toString()
+    uuid
+  }
+  @throws(classOf[Exception])
+  def mkChecksum(title:String): String ={
+    val sha512 = MessageDigest.getInstance("SHA-512")
+    sha512.update(title.getBytes)
     val sb = new StringBuilder
     sha512.digest().foreach { b =>
       sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1))
