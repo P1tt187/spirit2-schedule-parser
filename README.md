@@ -2,7 +2,7 @@
 
 this Programm parses the schedule from [http://my.fh-sm.de/~fbi-x/Stundenplan/](http://my.fh-sm.de/~fbi-x/Stundenplan/) and transforms it to a JSON-Array
 
-#Outputstructure
+## Outputstructure
 ```javascript
 
 {
@@ -64,7 +64,8 @@ this Programm parses the schedule from [http://my.fh-sm.de/~fbi-x/Stundenplan/](
     "longTitle": "",
     "lectureKind": "LECTURE",
     "lectureName": "DBS V1"
-  }]
+  }],  
+  "uid":"bdd18e36e7339de9442887aae190781f321f47cb45afcb4c42baa80001a6f0facd93f3e8e8a133dca2026c759968d8cdf7a4f2231cf22dca74cfb59d87eaeb2e"
     }
 
 ```
