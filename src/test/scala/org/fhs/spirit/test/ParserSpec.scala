@@ -34,7 +34,8 @@ object ParserSpec extends Specification {
 
   "Weekday Tests" should {
     "parse weekday" in {
-      val parseResults = EWeekdays.values().map(weekday => EWeekdays.findConstantByName(weekday.getGermanName))
+      val days = Array("Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag", "Sonnabend","Sonntag")
+      val parseResults = days.map(weekday => EWeekdays.findConstantByName(weekday))
 
       parseResults.forall(_.isPresent) must beTrue
 
